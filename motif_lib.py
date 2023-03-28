@@ -8,11 +8,28 @@ import math
 import itertools
 import numpy as np
 
+import higher_order_motif
+
 #Motif order 3 analysis
 def motifs_order_3(edges):
     N = 3
-    full, visited = motifs_ho_full(edges, N)   #motifs with higher order interaction
-    standard = motifs_standard(edges, N, visited)  #motifs composed only by pairwise interactions
+    full, visited, ho_motif_set = motifs_ho_full(edges, N)                  #motifs with higher order interaction
+    standard, std_motif_set = motifs_standard(edges, N, visited)            #motifs composed only by pairwise interactions
+
+    '''
+    #Debug: motif set print
+
+    print("ho_motif_set")
+    for m in ho_motif_set:
+        print(m)
+    print("end print ho_motif_set")
+
+    print("std_motif_set")
+    for m in std_motif_set:
+        print(m)
+    print("end print std_motif_set")
+    '''
+
 
     #print("print full")
     #print(full)
@@ -30,21 +47,46 @@ def motifs_order_3(edges):
     #print(res)
     #print("end print res")
 
-    return res
+    #union of all the motif sets
+    complete_motif_set = ho_motif_set.union(std_motif_set)
+
+    return res, complete_motif_set
 
 
 #Motif order 4 analysis
 def motifs_order_4(edges):
     N = 4
-    full, visited = motifs_ho_full(edges, N, )
-    not_full, visited = motifs_ho_not_full(edges, N, visited)
-    standard = motifs_standard(edges, N, visited)
+    full, visited, ho_motif_set = motifs_ho_full(edges, N, )
+    not_full, visited, hon_motif_set = motifs_ho_not_full(edges, N, visited)
+    standard, std_motif_set= motifs_standard(edges, N, visited)
+
+    '''
+    #Debug: motif set print
+
+    print("ho_motif_set")
+    for m in ho_motif_set:
+        print(m)
+    print("end print ho_motif_set")
+
+    print("std_motif_set")
+    for m in std_motif_set:
+        print(m)
+    print("end print std_motif_set")
+
+    print("hon_motif_set")
+    for m in hon_motif_set:
+        print(m)
+    print("end print hon_motif_set")
+    '''
 
     res = []
     for i in range(len(full)):
         res.append((full[i][0], max([full[i][1], not_full[i][1], standard[i][1]])))
 
-    return res
+    #union of all the motif sets
+    complete_motif_set = ho_motif_set.union(hon_motif_set, std_motif_set)
+
+    return res, complete_motif_set
 
 ############################################################
 ############################################################
@@ -53,6 +95,9 @@ def motifs_order_4(edges):
 #of cardinality N
 def motifs_ho_full(edges, N):
     mapping, labeling = generate_motifs(N)
+
+    #set of motifs in the current hypergraph
+    motif_set = set()
 
     #print("print mapping")
     #print(mapping)
@@ -120,9 +165,12 @@ def motifs_ho_full(edges, N):
                 if edge in T:   #l'insieme di nodi edge esiste in T, ovvero esiste nell'ipergrafo in input
                     motif.append(edge)
 
+        '''
+        #Debug: print motif as soon as it has been visisted by the algorithm
         print("motif")
         print(motif)
         print("end print motif")
+        '''
 
         #start count motif
             #motif
@@ -166,6 +214,11 @@ def motifs_ho_full(edges, N):
         if labeled_motif in labeling:
             labeling[labeled_motif] += 1
 
+
+        #add motif to the motif_set
+        newMotif = higher_order_motif.Higher_order_motif(N, nodes, labeled_motif)
+        motif_set.add(newMotif)
+
         print("...end count motif")
 
     for e in edges:
@@ -197,12 +250,15 @@ def motifs_ho_full(edges, N):
     for i in range(len(out)):
         D[i] = out[i][0]
 
-    return out, visited
+    return out, visited, motif_set
 
 #used in motifs_order_4: counts order motifs of order 4
 #which are composed of order 3 interactions
 def motifs_ho_not_full(edges, N, visited):
     mapping, labeling = generate_motifs(N)
+
+    #set of motifs in the current hypergraph
+    motif_set = set()
 
     T = {}
     graph = {}
@@ -230,9 +286,12 @@ def motifs_ho_not_full(edges, N, visited):
                 if edge in T:
                     motif.append(edge)
 
+        '''
+        #Debug: print motif as soon as it has been visisted by the algorithm
         print("motif")
         print(motif)
         print("end print motif")
+        '''
 
         m = {}
         idx = 1
@@ -252,6 +311,10 @@ def motifs_ho_not_full(edges, N, visited):
         if labeled_motif in labeling:
             labeling[labeled_motif] += 1
         
+        #add motif to the motif_set
+        newMotif = higher_order_motif.Higher_order_motif(N, nodes, labeled_motif)
+        motif_set.add(newMotif)
+
         print("...end count motif")
 
     for e in edges:
@@ -282,12 +345,15 @@ def motifs_ho_not_full(edges, N, visited):
     for i in range(len(out)):
         D[i] = out[i][0]
 
-    return out, visited
+    return out, visited, motif_set
 
 #in visisted there are order N hyperedges which have been already visited
 #in this function we consider only pairwise interactions
 def motifs_standard(edges, N, visited):
     mapping, labeling = generate_motifs(N)
+
+    #set of motifs in the current hypergraph
+    motif_set = set()
 
     graph = {}  #dictionary: keys are the nodes, the values are the adjacency list of the node
     T = {}
@@ -327,9 +393,12 @@ def motifs_standard(edges, N, visited):
             if edge in T:
                 motif.append(edge)
 
+        '''
+        #Debug: print motif as soon as it has been visisted by the algorithm
         print("print motif")
         print(motif)
         print("end print motif")
+        '''
 
         #inizia count_motif
             #print motif
@@ -372,6 +441,10 @@ def motifs_standard(edges, N, visited):
             print("this is not in labeling")
             print(labeled_motif)
             print("-")
+
+        #add motif to the motif_set
+        newMotif = higher_order_motif.Higher_order_motif(N, nodes, labeled_motif)
+        motif_set.add(newMotif)
 
         print("finisce count_motif")
 
@@ -424,7 +497,7 @@ def motifs_standard(edges, N, visited):
     for i in range(len(out)):
         D[i] = out[i][0]
 
-    return out
+    return out, motif_set
 
 #############################################################
 #############################################################
@@ -540,3 +613,26 @@ def relabel(edges, relabeling):
             new_edge.append(relabeling[v - 1])
         res.append(tuple(sorted(new_edge)))
     return sorted(res)
+
+
+############################################################
+############################################################
+
+'''
+Input parameters:
+    - summary: a hypergraph summary
+    - m: higher order motif in the summary
+
+The purpose of the function is to merge the components of the higher order motif m
+in order to build a single supernode.
+
+Ouput: id of the new supernode
+'''
+def motif_condense(summary, m):
+    sink = m.components[0]
+    
+    for i in range(1, m.order):
+        sink = summary.merge(sink, m.components[i])
+
+    return sink
+        
