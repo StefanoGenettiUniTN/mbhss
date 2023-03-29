@@ -91,7 +91,7 @@ print(mySummary.summaryHypergraph)
 
 #kgs_greedy(component_adj, mySummary, 3)
 
-mbhss.mbhss(component_adj, mySummary, 3)
+mbhss.mbhss(component_adj, mySummary, 4)
 
 ######################################################
 """
