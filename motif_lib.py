@@ -10,6 +10,10 @@ import numpy as np
 
 import higher_order_motif
 
+from utils import getHyperedgeNodeSet
+from utils import jaccard_similarity
+from utils import common_neighbors_similarity
+
 #Motif order 3 analysis
 def motifs_order_3(edges):
     N = 3
@@ -635,4 +639,62 @@ def motif_condense(summary, m):
         sink = summary.merge(sink, m.components[i])
 
     return sink
-        
+
+
+############################################################
+############################################################
+
+'''
+Input parameters:
+    - supernode s1
+    - supernode s2
+
+Output:
+    - similarity coefficient between s1 and s2
+
+The similarity between two supernodes of the hypergraph is
+computed considering their hyperneighbors. The intermediate
+result of this computation is a matrix MxN such that:
+ - M is the number of hyperedges incident to s1
+ - N is the number of hyperedges incident to s2
+In order to convert this matrix in a single real value we
+use avg norm calculation.
+'''
+def supernode_pair_topological_similarity(summary, s1, s2):
+
+    s1_hyperneighborhood = list()    #set of hyperedges set incident to s1
+    s2_hyperneighborhood = list()    #set of hyperedges set incident to s2
+
+    for h_id in s1.intersection_profile:
+        h_set = getHyperedgeNodeSet(summary.summaryHypergraph, h_id)
+        s1_hyperneighborhood.append(h_set)
+
+    for h_id in s2.intersection_profile:
+        h_set = getHyperedgeNodeSet(summary.summaryHypergraph, h_id)
+        s2_hyperneighborhood.append(h_set)
+
+    similarity_sum = 0
+    for s1_h_set in s1_hyperneighborhood:
+        for s2_h_set in s2_hyperneighborhood:
+            similarity_sum += jaccard_similarity(s1_h_set, s2_h_set)
+            #similarity_sum += common_neighbors_similarity(s1_h_set, s2_h_set)
+            
+
+    similarity_avg = similarity_sum/(len(s1_hyperneighborhood)*len(s2_hyperneighborhood))
+
+    return similarity_avg
+
+
+def motif_similarity_coefficient(input_motif, similarity_measure, summary):
+    component_couples = list(itertools.combinations(input_motif.components, 2))
+
+    similarity_sum = 0
+    for c1, c2 in component_couples:
+        supernode_c1 = summary.getSupernode(c1)
+        supernode_c2 = summary.getSupernode(c2)
+
+        similarity_sum += similarity_measure(summary, supernode_c1, supernode_c2)
+
+    avg_similarity = similarity_sum/len(component_couples)
+
+    return avg_similarity

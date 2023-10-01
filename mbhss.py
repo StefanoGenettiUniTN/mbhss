@@ -51,10 +51,20 @@ def mbhss(component_adj, summary, k):
 
         motif_set = h3_motif_set.union(h4_motif_set)    #complete set with order three and order 4 higher order motifs
 
-        if len(motif_set)==0:        #todo: aggiungere controllo anche su motivi di ordine 4
+        if len(motif_set)==0:
             motif_available = False
 
         #######################################################################################################
+
+        if motif_available:
+            for m3 in motif_set:
+                print(f"visiting motif: {m3.components}")
+
+                #here we try to compute the motif similarity coefficient of each motif
+                #which has been found in the data structure
+                if check_motif(summary, m3):
+                    motif_sim_coeff = motif_lib.motif_similarity_coefficient(m3, motif_lib.supernode_pair_topological_similarity, summary)
+                    print("motif similarity coefficient: "+str(motif_sim_coeff))
 
         if motif_available:
             #for the moment (march the 28th) we merge order three motifs
